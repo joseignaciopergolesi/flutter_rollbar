@@ -17,12 +17,14 @@ class Rollbar {
     @required this.accessToken,
     String environment,
     String platform,
+    Map<String, dynamic> person,
     Map<String, dynamic> config,
   }) {
     _config = config ?? <String, dynamic>{};
     _config.addAll(<String, Object>{
       'environment': environment,
       'platform': platform,
+      'person': person,
       'framework': 'flutter',
       'language': 'dart',
       'notifier': {
@@ -35,22 +37,13 @@ class Rollbar {
   final String accessToken;
   Map<String, dynamic> _config;
 
-  Future<Response> trace(Object error, StackTrace stackTrace,
-      {Map<String, Object> otherData}) async {
+  Future<Response> trace(Object error, StackTrace stackTrace, {Map<String, Object> otherData}) async {
     final body = <String, dynamic>{
       'trace': {
         'frames': Trace.from(stackTrace).frames.map((frame) {
-          return {
-            'filename': Uri.parse(frame.uri.toString()).path,
-            'lineno': frame.line,
-            'method': frame.member,
-            'colno': frame.column
-          };
+          return {'filename': Uri.parse(frame.uri.toString()).path, 'lineno': frame.line, 'method': frame.member, 'colno': frame.column};
         }).toList(),
-        'exception': {
-          'class': error.runtimeType.toString(),
-          'message': error.toString()
-        }
+        'exception': {'class': error.runtimeType.toString(), 'message': error.toString()}
       }
     };
 
@@ -59,8 +52,7 @@ class Rollbar {
     return await Request(accessToken, data).send();
   }
 
-  Future<Response> message(String messageBody,
-      {Map<String, Object> metadata, Map<String, Object> otherData}) async {
+  Future<Response> message(String messageBody, {Map<String, Object> metadata, Map<String, Object> otherData}) async {
     final body = <String, dynamic>{
       'message': {'body': messageBody}
     };
@@ -77,11 +69,7 @@ class Rollbar {
     Map<String, dynamic> body,
     Map<String, dynamic> otherData,
   ) {
-    var data = <String, dynamic>{
-      'body': body,
-      'timestamp': DateTime.now().millisecondsSinceEpoch / 1000,
-      'language': 'dart'
-    };
+    var data = <String, dynamic>{'body': body, 'timestamp': DateTime.now().millisecondsSinceEpoch / 1000, 'language': 'dart'};
 
     if (otherData != null) {
       data = deepMerge(data, otherData);
